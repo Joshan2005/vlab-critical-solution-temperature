@@ -3,86 +3,125 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 
-st.set_page_config(page_title="Critical Solution Temperature Simulator", layout="centered")
-st.title("🌡️ Critical Solution Temperature Simulator - Phenol-Water System")
+st.set_page_config(page_title="Virtual Lab - Critical Solution Temperature", layout="centered")
 
-# Theory Section
-with st.expander("📘 AIM, PRINCIPLE & PROCEDURE"):
+st.title("🧪 Virtual Lab: Critical Solution Temperature of Phenol-Water System")
+
+# -------------------------
+# Aim, Apparatus, Principle
+# -------------------------
+with st.expander("📘 AIM, APPARATUS, PRINCIPLE & PROCEDURE"):
     st.markdown("""
-    **AIM**  
-    To determine the critical solution temperature (CST) for phenol-water system and the percentage of phenol in a given sample.
+    ### 🎯 AIM
+    To determine the critical solution temperature for phenol-water system and to find out the percentage of phenol in the given sample.
 
-    **PRINCIPLE**  
-    Phenol and water are partially miscible at ordinary temperatures. Their miscibility increases with temperature.  
-    At a certain temperature, both phases become one homogeneous solution — this is called the **critical solution temperature**.
+    ### 🧪 APPARATUS
+    Burette, boiling tube, thermometer, water bath, etc.
 
-    **PROCEDURE**  
-    1. Mix 5 ml of phenol with increasing volumes of distilled water (3 to 31 ml).  
-    2. Heat the mixture in a water bath and note the temperature at which turbidity disappears.  
-    3. Cool and record the temperature when turbidity reappears.  
-    4. Repeat for all samples and plot Mean Temp vs % Phenol.
+    ### 🧬 PRINCIPLE
+    Phenol and water are partially miscible at ordinary temperatures. On shaking, two saturated solutions form (called conjugate solutions).  
+    As temperature rises, mutual solubility increases until a homogeneous mixture forms — this temperature is called the **Critical Solution Temperature (CST)**.
+
+    ### 🧂 PROCEDURE (Summary)
+    1. Add 5 ml phenol + varying volumes of water (3–31 ml).
+    2. Heat and stir in a water bath until turbidity disappears.
+    3. Cool until turbidity reappears.
+    4. Note both temperatures and compute mean.
+    5. Repeat for all mixtures.
     """)
 
-# Input Section
-st.subheader("🔢 Enter Observations")
+# -------------------------
+# Observation Table
+# -------------------------
+st.subheader("📊 Observation Table Entry")
 
 data = []
-for i in range(1, 16):
-    col1, col2, col3, col4 = st.columns([1, 1, 1, 1])
+st.markdown("Enter disappearance and reappearance temperatures for each water volume:")
+
+for i in range(15):
+    water_vol = 3 + i * 2
+    col1, col2, col3 = st.columns([1, 1, 1])
     with col1:
-        vol_water = st.number_input(f"#{i} - Volume of Water (ml)", value=3 + 2 * (i - 1), key=f"water_{i}")
+        t_dis = st.number_input(f"#{i+1} - T_disappear (°C)", key=f"dis_{i}")
     with col2:
-        temp_dis = st.number_input(f"T_disappear (°C)", key=f"tdis_{i}")
+        t_app = st.number_input(f"T_appear (°C)", key=f"app_{i}")
     with col3:
-        temp_app = st.number_input(f"T_appear (°C)", key=f"tapp_{i}")
-    with col4:
-        st.markdown("Mean Temp (°C):")
-        mean_temp = (temp_dis + temp_app) / 2 if temp_dis and temp_app else 0
-        st.write(f"**{mean_temp:.2f}**")
-    if temp_dis and temp_app:
-        vol_percent_phenol = (5 / (5 + vol_water)) * 100
-        data.append((vol_percent_phenol, mean_temp))
+        if t_dis > 0 and t_app > 0:
+            mean_temp = (t_dis + t_app) / 2
+            vol_percent = (5 / (5 + water_vol)) * 100
+            data.append((5, water_vol, vol_percent, t_dis, t_app, mean_temp))
+            st.success(f"Mean Temp: {mean_temp:.2f} °C | Phenol %: {vol_percent:.2f}")
+        else:
+            st.warning("Enter both temperatures.")
 
+# -------------------------
 # Unknown Sample
+# -------------------------
 st.subheader("🧪 Unknown Sample")
-unknown_temp_dis = st.number_input("Disappearance Temperature (°C)", key="unk_dis")
-unknown_temp_app = st.number_input("Appearance Temperature (°C)", key="unk_app")
-if unknown_temp_dis and unknown_temp_app:
-    unknown_mean_temp = (unknown_temp_dis + unknown_temp_app) / 2
-    st.write(f"**Mean Temp for Unknown Sample:** {unknown_mean_temp:.2f} °C")
+unk_dis = st.number_input("T_disappear (°C) for Unknown", key="unk_dis")
+unk_app = st.number_input("T_appear (°C) for Unknown", key="unk_app")
+unk_mean = None
+if unk_dis and unk_app:
+    unk_mean = (unk_dis + unk_app) / 2
+    st.success(f"Mean Temperature for Unknown Sample: **{unk_mean:.2f} °C**")
 
-# DataFrame and Plot
+# -------------------------
+# DataFrame and Graph
+# -------------------------
 if data:
-    df = pd.DataFrame(data, columns=["Volume % of Phenol", "Mean Temp (°C)"])
-    st.subheader("📈 Mean Temperature vs Volume % Phenol")
+    df = pd.DataFrame(data, columns=[
+        "Vol. of Phenol (ml)", "Vol. of Water (ml)", "Vol. % Phenol",
+        "T_disappear (°C)", "T_appear (°C)", "Mean Temp (°C)"
+    ])
 
+    st.subheader("📋 Data Table")
+    st.dataframe(df)
+
+    st.subheader("📈 Volume % of Phenol vs Mean Temperature")
     fig, ax = plt.subplots()
-    ax.plot(df["Volume % of Phenol"], df["Mean Temp (°C)"], marker='o', color='green')
+    ax.plot(df["Vol. % Phenol"], df["Mean Temp (°C)"], marker='o', linestyle='-', color='blue')
     ax.set_xlabel("Volume % of Phenol")
     ax.set_ylabel("Mean Temperature (°C)")
     ax.set_title("Critical Solution Temperature Curve")
     ax.grid(True)
 
-    # Mark CST (maximum point)
     max_idx = df["Mean Temp (°C)"].idxmax()
-    cst = df.iloc[max_idx]["Mean Temp (°C)"]
-    critical_comp = df.iloc[max_idx]["Volume % of Phenol"]
-    ax.axvline(critical_comp, color='red', linestyle='--')
-    ax.annotate(f'CST = {cst:.2f}°C\n@ {critical_comp:.1f}%', 
+    cst = df.loc[max_idx, "Mean Temp (°C)"]
+    critical_comp = df.loc[max_idx, "Vol. % Phenol"]
+
+    ax.axvline(x=critical_comp, color='red', linestyle='--', label="CST Point")
+    ax.annotate(f"CST: {cst:.2f}°C\n@ {critical_comp:.1f}%", 
                 xy=(critical_comp, cst), xytext=(critical_comp+1, cst+1),
-                arrowprops=dict(facecolor='red', shrink=0.05))
+                arrowprops=dict(facecolor='red', shrink=0.05), fontsize=9)
     st.pyplot(fig)
 
+    # -------------------------
     # Result Section
-    st.subheader("✅ Results")
-    st.success(f"Critical Solution Temperature = **{cst:.2f} °C**")
-    st.success(f"Critical Solution Composition = **{critical_comp:.1f} % Phenol**")
+    # -------------------------
+    st.subheader("✅ Final Results")
+    st.success(f"🧊 Critical Solution Temperature = **{cst:.2f} °C**")
+    st.success(f"🧪 Critical Solution Composition = **{critical_comp:.1f} % Phenol**")
 
-    # Estimating Phenol % in unknown sample
-    if unknown_temp_dis and unknown_temp_app:
-        closest_idx = (df["Mean Temp (°C)"] - unknown_mean_temp).abs().idxmin()
-        est_phenol = df.iloc[closest_idx]["Volume % of Phenol"]
-        st.success(f"Estimated % of Phenol in Unknown Sample = **{est_phenol:.1f} %**")
+    if unk_mean:
+        idx_closest = (df["Mean Temp (°C)"] - unk_mean).abs().idxmin()
+        est_phenol = df.loc[idx_closest, "Vol. % Phenol"]
+        st.success(f"🧬 Estimated % Phenol in Unknown Sample = **{est_phenol:.1f} %**")
+
+# -------------------------
+# Pre & Post Lab Qs
+# -------------------------
+with st.expander("🧠 Pre-Lab & Post-Lab Questions"):
+    st.markdown("""
+    **Pre-Lab Questions**
+    1. Define partially miscible systems.  
+    2. Define critical solution temperature.  
+    3. How does temperature affect solubility of binary liquids?
+
+    **Post-Lab Questions**
+    1. List types of partially miscible systems.  
+    2. Significance of critical solution temperature.  
+    3. How does temperature affect phenol-water solubility?
+    """)
 
 # Footer
-st.info("Adjust input temperatures above to simulate different CST observations and see how the composition affects miscibility.")
+st.info("You can use this simulator to understand CST behavior by inputting various experimental values.")
